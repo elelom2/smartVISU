@@ -1395,8 +1395,8 @@ $(document).delegate('div[data-widget="plot.stacked"]', {
         		    timestamp = timestamp - 1000 * 60 * 60 * 24;
         		}
     		    // 2)
-    		    var newTimestamp = timestamp.toString().substring(0, 9).concat('0000');
-                oneResponse[k][0] = parseInt(newTimestamp);
+    		    //var newTimestamp = timestamp.toString().substring(0, 9).concat('0000');
+                oneResponse[k][0] = new Date(timestamp).setHours(0,0,0,0);//parseInt(newTimestamp);
             }
             oneResponse.pop(); // 3)
             response[i] = oneResponse;
@@ -1419,6 +1419,9 @@ $(document).delegate('div[data-widget="plot.stacked"]', {
 				xAxis: { type: 'datetime', title: { text: axis[0] } },
 				yAxis: { min: $(this).attr('data-ymin'), max: $(this).attr('data-ymax'), title: { text: axis[1] }, stackLabels: {
 				    enabled: showStacklabels,
+				    formatter: function() {
+				    	return parseFloat(this.total).toFixed(2);
+				    },
 				    style: { color: '#fff', 'font-size': '13px', 'line-height': '14px' } }
 				    },
                 plotOptions: {
@@ -1426,7 +1429,8 @@ $(document).delegate('div[data-widget="plot.stacked"]', {
                         stacking: 'normal',
                         dataLabels: { enabled: false }
                     }
-                }
+                },
+		tooltip: { valueDecimals: 2 }
         });
 
 	},
@@ -1458,13 +1462,19 @@ $(document).delegate('div[data-widget="plot.minmaxavg"]', {
 		var axis = $(this).attr('data-axis').explode();
 		var unit = $(this).attr('data-unit');
 
-		var minValues = response[0];
-		var maxValues = response[1];
-
-		var ranges = [];
-		for (var i = 0; i < minValues.length; i++) {
-			ranges[i] = [minValues[i][0], minValues[i][1], maxValues[i][1]];
+		for (var i = 0; i < response.length; i++) { // [min, max, avg]
+			var oneResponse = response[i]; // [[ts, val], [ts, val]....]
+			oneResponse.pop();
+			oneResponse.pop();
+			for (var j = 0; j < oneResponse.length; j++) {
+				oneResponse[j][0] = new Date(oneResponse[j][0]).setHours(0,0,0,0);
+			}
 		}
+		
+		var ranges = [];
+		for (var i = 0; i < response[0].length; i++) {
+                      ranges[i] = [response[0][i][0], response[0][i][1], response[1][i][1]];
+                }
 
 		// draw the plot
 		$('#' + this.id).highcharts({
@@ -1529,8 +1539,8 @@ $(document).delegate('div[data-widget="plot.minmaxavg"]', {
 
 		for (var i = 0; i < minValues.length; i++) {
 			var chart = $('#' + this.id).highcharts();
-			chart.series[0].addPoint([minValues[i][0], minValues[i][1], maxValues[i][1]], false, (chart.series[i].data.length >= count));
-			chart.series[1].addPoint(response[2][i], false, (chart.series[i].data.length >= count));
+			chart.series[0].addPoint([new Date(minValues[i][0]).setHours(0,0,0,0), minValues[i][1], maxValues[i][1]], false, (chart.series[i].data.length >= count));
+			chart.series[1].addPoint([new Date(response[2][i][0]).setHours(0,0,0,0), response[2][i][1]], false, (chart.series[i].data.length >= count));
 			chart.redraw();
 		}
 	}
