@@ -41,6 +41,36 @@ function twig_smartdate($val, $format = 'date')
 	return transdate($format, $val);
 }
 
+function twig_deficon(Twig_Environment $env, $val, $def = '')
+{
+	$globals = $env->getGlobals();
+
+	if (is_array($val))
+	{
+		for ($i = 0; $i < count($val); $i++)
+		{
+			$ret[$i] = $val[$i];
+
+			if ($ret[$i] == '')
+				$ret[$i] = $def;
+
+			if (substr($ret[$i], -4, 4) == ".png" || substr($ret[$i], -4, 4) == ".svg" and strpos($ret[$i], "/") === false)
+				$ret[$i] = $globals["icon0"].$ret[$i];
+		}
+	}
+	else
+	{
+		$ret = $val;
+
+		if ($ret == '')
+			$ret = $def;
+
+		if (substr($ret, -4, 4) == ".png" || substr($ret, -4, 4) == ".svg" and strpos($ret, "/") === false)
+			$ret = $globals["icon0"].$ret;
+	}
+
+	return $ret;
+}
 
 // -----------------------------------------------------------------------------
 // General functions for Twig
@@ -115,7 +145,7 @@ function twig_docu($filename)
 	// Header
 	preg_match_all('#.+?@(.+?)\W+(.*)#i', substr($file, 0, strpos($file, '*/') + 2), $header);
 
-	// Body 
+	// Body
 	preg_match_all('#\/\*\*[\r\n](.+?)\*\/.+?\{\% macro(.+?)\%\}#is', strstr($file, '*/'), $widgets);
 
 	if (count($widgets[2]) > 0)
@@ -130,11 +160,11 @@ function twig_docu($filename)
 		foreach ($widgets[1] as $no => $docu)
 		{
 			$rettmp[$no]['desc'] = trim(str_replace('* ', '', substr($docu, 0, strpos($docu, '@'))));
-			
+
 			if (substr($rettmp[$no]['desc'], -1, 1) == '*')
 				$rettmp[$no]['desc'] = substr($rettmp[$no]['desc'], 0, -1);
-			
-			// Header-Tags 
+
+			// Header-Tags
 			foreach ($header[1] as $headerno => $headertag)
 			{
 				if (!($headertag == "author" and trim($header[2][$headerno]) == "Martin Gleiß"))

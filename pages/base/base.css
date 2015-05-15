@@ -4,7 +4,7 @@
  * @author      Martin Gleiß
  * @copyright   2012 - 2015
  * @license     GPL [http://www.gnu.de]
- * ----------------------------------------------------------------------------- 
+ * -----------------------------------------------------------------------------
  */
 
 @CHARSET "UTF-8";
@@ -340,18 +340,18 @@ a.ui-btn-inline.ui-midi .icon {
 a.ui-btn-inline.ui-maxi {
     min-height: 80px;
     min-width: 84px;
-} 
+}
 
 a.ui-btn-inline.ui-maxi[data-iconpos="notext"] .ui-icon {
     margin: 30px 0 0 33px !important;
-}  
+}
 
 a.ui-btn-inline.ui-maxi[data-iconpos="nopic"] .ui-btn-inner {
     padding-top: 28px;
-} 
+}
 
 a.ui-btn-inline.ui-maxi .icon {
-    display: block;      
+    display: block;
     margin-left: 12px;
 }
 */
@@ -823,7 +823,11 @@ a.ui-slider-handle-semicircle .ui-btn-inner {
 /**
  * --- W i d g e t s :   B A S I C --------------------------------------------
  */
-.switch .icon {
+.switch {
+	display: inline-block;
+}
+
+.switch.icon {
 	vertical-align: middle;
 }
 
@@ -1398,10 +1402,10 @@ canvas.colordisc {
  * --- W i d g e t s :   I C O N ----------------------------------------------
  */
 svg.icon {
-	display: inline-block;
 	vertical-align: middle;
-	width: 50px;
-	height: 50px;
+	width: 48px;
+	height: 48px;
+	margin: 1px;
 }
 
 svg.icon:hover {
@@ -1436,11 +1440,12 @@ svg.icon text {
 }
 
 svg.fx-icon {
-	display: inline-block;
 	vertical-align: middle;
-	width: 50px;
-	height: 50px;
+	width: 48px;
+	height: 48px;
+	margin: 1px;
 }
+
 
 /**
  * --- T e m p l a t e :   B A S E --------------------------------------------
