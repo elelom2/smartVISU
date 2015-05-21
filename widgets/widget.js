@@ -1633,25 +1633,6 @@ $(document).delegate('div[data-widget="plot.minmaxavg"]', {
 	}
 });
 
-// ----- icon.light ---------------------------------------------------------
-$(document).delegate('svg[data-widget="icon.light"]', {
-	'update': function (event, response) {
-		// response is: {{ gad_value }}, {{ gad_switch }}
-        var val = Math.round(response[0] / $(this).attr('data-max') * 10);
-        // Iterate over all child elements
-        var i=1;
-        $('#' + this.id + ' g#light-rays line').each(function(){
-            if (val >= i) {
-                $(this).css("visibility", "visible");
-            }
-            else {
-                $(this).css("visibility", "hidden");
-            }
-            i++;
-        });
-	}
-});
-
 // ----- icon.zenith ----------------------------------------------------------
 $(document).delegate('svg[data-widget="icon.zenith"]', {
 	'update': function (event, response) {
