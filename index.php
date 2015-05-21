@@ -13,7 +13,7 @@
  */
 define ('config_version', '2.8');
 
-// get config-variables
+// get config-variables 
 require_once 'lib/includes.php';
 require_once const_path_system.'functions_twig.php';
 
@@ -90,6 +90,7 @@ if (is_file(const_path."pages/".config_pages."/".$request['page'].".html")
 	$twig->addFilter('bit', new Twig_Filter_Function('twig_bit'));
 	$twig->addFilter('substr', new Twig_Filter_Function('twig_substr'));
 	$twig->addFilter('smartdate', new Twig_Filter_Function('twig_smartdate'));
+	$twig->addFilter('deficon', new Twig_Filter_Function('twig_deficon', array('needs_environment' => true)));
 
 	$twig->addFunction('uid', new Twig_Function_Function('twig_uid'));
 	$twig->addFunction('once', new Twig_Function_Function('twig_once'));
@@ -99,7 +100,7 @@ if (is_file(const_path."pages/".config_pages."/".$request['page'].".html")
 	$twig->addFunction('lang', new Twig_Function_Function('twig_lang'));
 	$twig->addFunction('implode', new Twig_Function_Function('twig_implode', array('is_safe' => array('html'))));
 
-	// init lexer comments
+	// init lexer comments                   
 	$lexer = new Twig_Lexer($twig, array('tag_comment' => array('/**', '*/')));
 	$twig->setLexer($lexer);
 
@@ -120,7 +121,7 @@ if (is_file(const_path."pages/".config_pages."/".$request['page'].".html")
 	catch (Exception $e)
 	{
 		// header("HTTP/1.0 602 smartVISU Template Error");
-
+		
 		echo "<pre>\n";
 		echo str_repeat(" ", 71)."smartVISU\n";
 		echo str_repeat(" ", 62).date('H:i, d.m').", v".config_version."\n";

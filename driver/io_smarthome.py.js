@@ -168,11 +168,6 @@ var io = {
 						notify.warning('Driver: smarthome.py', 'Protocol mismatch<br />smartVISU driver is: v' + io.version + '<br />SmartHome.py is: v' + proto + '<br /><br /> Update the system!');
 					}
 					break;
-
-				case 'url':
-					$.mobile.changePage(data.url);
-					break;
-
 			}
 		};
 
@@ -191,7 +186,7 @@ var io = {
 	send: function (data) {
 		if (io.socket.readyState == 1) {
 			io.socket.send(unescape(encodeURIComponent(JSON.stringify(data))));
-			// DEBUG:
+			// DEBUG: 
 			console.log('[io.smarthome.py] sending data: ', JSON.stringify(data));
 		}
 	},

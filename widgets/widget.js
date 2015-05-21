@@ -32,6 +32,9 @@
  * 'update': function(event, response) { }
  * Triggered through widget.update if a item has been changed.
  *
+ * 'draw': function (event) { }
+ * Triggered only for svgs, if it is loaded
+ *
  * 'point': function(event, response) { }
  * Triggerd only for plots through widget.update if the plot is already drawn
  * and only a new point has to be added to the series.
@@ -215,16 +218,23 @@ $(document).delegate('canvas[data-widget="basic.colordisc"]', {
 // ----- basic.dual -----------------------------------------------------------
 $(document).delegate('a[data-widget="basic.dual"]', {
 	'update': function (event, response) {
-		$('#' + this.id + ' img').attr('src', (response == $(this).attr('data-val-on') ? $(this).attr('data-pic-on') : $(this).attr('data-pic-off')));
+		$(this).val(response);
+		$(this).trigger('draw');
+	},
+
+	'draw': function(event) {
+		if($(this).val() == $(this).attr('data-val-on')) {
+			$('#' + this.id + '-off').hide();
+			$('#' + this.id + '-on').show();
+		}
+		else {
+			$('#' + this.id + '-on').hide();
+			$('#' + this.id + '-off').show();
+		}
 	},
 
 	'click': function (event) {
-		if ($('#' + this.id + ' img').attr('src') == $(this).attr('data-pic-off')) {
-			io.write($(this).attr('data-item'), $(this).attr('data-val-on'));
-		}
-		else {
-			io.write($(this).attr('data-item'), $(this).attr('data-val-off'));
-		}
+		io.write($(this).attr('data-item'), ($(this).val() == $(this).attr('data-val-off') ? $(this).attr('data-val-on') : $(this).attr('data-val-off')) );
 	}
 });
 
@@ -234,18 +244,24 @@ $(document).delegate('a[data-widget="basic.multistate"]', {
 		// get list of values and images
 		list_val = $(this).attr('data-vals').explode();
 		list_img = $(this).attr('data-img').explode();
+
 		// get the index of the value received
 		idx = list_val.indexOf(response.toString());
+
 		// update the image
 		$('#' + this.id + ' img').attr('src', list_img[idx]);
+
 		// memorise the index for next use
-		$(this).attr('index-mem', idx);
+		$(this).val(idx);
 	},
+
 	'click': function (event) {
 		// get the list of values
 		list_val = $(this).attr('data-vals').explode();
+
 		// get the last index memorised
-		old_idx = parseInt($(this).attr('index-mem'));
+		old_idx = parseInt($(this).val());
+
 		//compute the next index
 		var new_idx = old_idx + 1;
 		if (new_idx >= list_val.length) {
@@ -253,8 +269,9 @@ $(document).delegate('a[data-widget="basic.multistate"]', {
 		}
 		// send the value to driver
 		io.write($(this).attr('data-item'), list_val[new_idx]);
+
 		// memorise the index for next use
-		$(this).attr('index-mem', new_idx);
+		$(this).val(new_idx);
 	}
 });
 
@@ -515,6 +532,29 @@ $(document).delegate('input[data-widget="basic.slider"]', {
 // ----- basic.switch ---------------------------------------------------------
 $(document).delegate('span[data-widget="basic.switch"]', {
 	'update': function (event, response) {
+		$(this).val(response);
+		$(this).trigger('draw');
+	},
+
+	'draw': function(event) {
+		if($(this).val() == $(this).attr('data-val-on')) {
+			$('#' + this.id + '-off').hide();
+			$('#' + this.id + '-on').show();
+		}
+		else {
+			$('#' + this.id + '-on').hide();
+			$('#' + this.id + '-off').show();
+		}
+	},
+
+	'click': function (event) {
+		io.write($(this).attr('data-item'), ($(this).val() == $(this).attr('data-val-off') ? $(this).attr('data-val-on') : $(this).attr('data-val-off')) );
+	}
+});
+
+// ----- basic.switch.v1 ------------------------------------------------------
+$(document).delegate('span[data-widget="basic.switch.v1"]', {
+	'update': function (event, response) {
 		$('#' + this.id + ' img').attr('src', (response == $(this).attr('data-val-on') ? $(this).attr('data-pic-on') : $(this).attr('data-pic-off')));
 	},
 
@@ -528,7 +568,7 @@ $(document).delegate('span[data-widget="basic.switch"]', {
 	}
 });
 
-$(document).delegate('span[data-widget="basic.switch"] > a > img', 'hover', function (event) {
+$(document).delegate('span[data-widget="basic.switch.v1"] > a > img', 'hover', function (event) {
 	if (event.type === 'mouseenter') {
 		$(this).addClass("ui-focus");
 	}
@@ -609,7 +649,6 @@ $(document).delegate('[data-widget="basic.value"]', {
 	}
 });
 
-
 // ----- c l o c k ------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
@@ -636,14 +675,13 @@ $(document).delegate('span[data-widget="clock.miniclock"]', {
 	}
 });
 
-
 // ----- d e v i c e ----------------------------------------------------------
 // ----------------------------------------------------------------------------
 
 // ----- device.codepad -------------------------------------------------------
 $(document).delegate('div[data-widget="device.codepad"]', {
 	'keyup': function (event) {
-		if(event.keyCode == 13){
+		if (event.keyCode == 13) {
 			$('#' + this.id + '-ok').click();
 		}
 	}
@@ -704,7 +742,6 @@ $(document).delegate('div[data-widget="device.rtr"] > div > a[data-icon="plus"]'
 		io.write(item, temp);
 	}
 });
-
 
 // ----- p l o t ---------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -779,17 +816,20 @@ $(document).delegate('div[data-widget="plot.comfortchart"]', {
 	}
 });
 
-
 // ----- plot.multiaxes ----------------------------------------------------------
 $(document).delegate('div[data-widget="plot.multiaxis"]', {
 	'update': function (event, response) {
 		// response is: [ [ [t1, y1], [t2, y2] ... ], [ [t1, y1], [t2, y2] ... ], ... ]
 
 		var ymin = [];
-		if ($(this).attr('data-ymin')) { ymin = $(this).attr('data-ymin').explode(); }
+		if ($(this).attr('data-ymin')) {
+			ymin = $(this).attr('data-ymin').explode();
+		}
 
 		var ymax = [];
-		if ($(this).attr('data-ymax')) { ymax = $(this).attr('data-ymax').explode(); }
+		if ($(this).attr('data-ymax')) {
+			ymax = $(this).attr('data-ymax').explode();
+		}
 
 		var label = $(this).attr('data-label').explode();
 		var color = $(this).attr('data-color').explode();
@@ -798,13 +838,19 @@ $(document).delegate('div[data-widget="plot.multiaxis"]', {
 		var zoom = $(this).attr('data-zoom');
 
 		var assign = [];
-		if ($(this).attr('data-assign')) { assign = $(this).attr('data-assign').explode(); }
+		if ($(this).attr('data-assign')) {
+			assign = $(this).attr('data-assign').explode();
+		}
 
 		var opposite = [];
-		if ($(this).attr('data-opposite')) { opposite = $(this).attr('data-opposite').explode(); }
+		if ($(this).attr('data-opposite')) {
+			opposite = $(this).attr('data-opposite').explode();
+		}
 
 		var ycolor = [];
-		if ($(this).attr('data-ycolor')) { ycolor = $(this).attr('data-ycolor').explode(); }
+		if ($(this).attr('data-ycolor')) {
+			ycolor = $(this).attr('data-ycolor').explode();
+		}
 
 		var series = [];
 		var yaxis = [];
@@ -880,7 +926,6 @@ $(document).delegate('div[data-widget="plot.multiaxis"]', {
 		}
 	}
 });
-
 
 // ----- plot.period ----------------------------------------------------------
 $(document).delegate('div[data-widget="plot.period"]', {
@@ -1075,7 +1120,6 @@ $(document).delegate('div[data-widget="plot.temprose"]', {
 	}
 });
 
-
 // ----- s t a t u s -----------------------------------------------------------
 // -----------------------------------------------------------------------------
 
@@ -1085,18 +1129,19 @@ $(document).delegate('span[data-widget="status.collapse"]', {
 		// response is: {{ gad_trigger }}
 
 		if (response[0] != 0) {
-			$('div[data-bind="' + $(this).attr('data-id') + '"]').not('.ui-collapsible').show();
+			$('div[data-bind="' + $(this).attr('data-id') + '"]')
+				.not('.ui-collapsible').show()
+				.trigger("expand");
 			$('div[data-bind="' + $(this).attr('data-id') + '"].ui-popup').popup("open");
-			$('div[data-bind="' + $(this).attr('data-id') + '"]').trigger("expand");
 		}
 		else {
-			$('div[data-bind="' + $(this).attr('data-id') + '"]').not('.ui-collapsible').hide();
+			$('div[data-bind="' + $(this).attr('data-id') + '"]')
+				.not('.ui-collapsible').hide()
+				.trigger("collapse");
 			$('div[data-bind="' + $(this).attr('data-id') + '"].ui-popup').popup("close");
-			$('div[data-bind="' + $(this).attr('data-id') + '"]').trigger("collapse");
 		}
 	}
 });
-
 
 // ----- status.log -----------------------------------------------------------
 $(document).delegate('span[data-widget="status.log"]', {
@@ -1142,15 +1187,14 @@ $(document).delegate('span[data-widget="status.message"]', {
 			$('#' + this.id + '-message p span').html(response[1] ? '<b>' + response[1] + '</b><br />' : '');
 			$('#' + this.id + '-message .stamp').html(response[2] ? new Date(response[2]).transShort() : new Date().transShort());
 			$('#' + this.id + '-message').popup('open');
-			console.log (this.id + ' open ' +response[0]);
+			console.log(this.id + ' open ' + response[0]);
 		}
 		else {
 			$('#' + this.id + '-message').popup('close');
-			console.log (this.id + ' ' +response[0]);
+			console.log(this.id + ' ' + response[0]);
 		}
 	}
 });
-
 
 // ----- i c o n --------------------------------------------------------------
 // ----------------------------------------------------------------------------
@@ -1183,13 +1227,11 @@ $(document).delegate('svg[data-widget="icon.arrow"]', {
 		var ang = response[0] / $(this).attr('data-max') * 2 * Math.PI;
 
 		var pt = [];
-		pt = pt.concat([50, 50], fx.rotate([25, 50], ang, [50, 50]), fx.rotate([50, 18], ang, [50, 50]), fx.rotate([75,
-			50], ang, [50, 50]), [50, 50]);
+		pt = pt.concat([50, 50], fx.rotate([25, 50], ang, [50, 50]), fx.rotate([50, 18], ang, [50, 50]), fx.rotate([75, 50], ang, [50, 50]), [50, 50]);
 		$('#' + this.id + ' #line0').attr('points', pt.toString());
 
 		pt = [];
-		pt = pt.concat(fx.rotate([32, 50], ang, [50, 50]), fx.rotate([32, 60], ang, [50, 50]), fx.rotate([68, 60], ang,
-			[50, 50]), fx.rotate([68, 50], ang, [50, 50]));
+		pt = pt.concat(fx.rotate([32, 50], ang, [50, 50]), fx.rotate([32, 60], ang, [50, 50]), fx.rotate([68, 60], ang, [50, 50]), fx.rotate([68, 50], ang, [50, 50]));
 		$('#' + this.id + ' #line1').attr('points', pt.toString());
 	}
 });
@@ -1199,7 +1241,7 @@ $(document).delegate('svg[data-widget="icon.battery"]', {
 	'update': function (event, response) {
 		// response is: {{ gad_value }}, {{ gad_switch }}
 
-		var val = Math.round(response[0] / $(this).attr('data-max') * 40);
+		var val = Math.floor(response[0] / $(this).attr('data-max') * 40 / 6) * 6;
 		fx.grid(this, val, [39, 68], [61, 28]);
 	}
 });
@@ -1308,6 +1350,20 @@ $(document).delegate('svg[data-widget="icon.graph"]', {
 	}
 });
 
+// ----- icon.light ---------------------------------------------------------
+$(document).delegate('svg[data-widget="icon.light"]', {
+	'update': function (event, response) {
+		// response is: {{ gad_value }}, {{ gad_switch }}
+		var val = Math.round(response[0] / $(this).attr('data-max') * 10);
+		// Iterate over all child elements
+		var i = 1;
+		$('#' + this.id + ' g#light-rays line').each(function () {
+			$(this).css("visibility", (val >= i ? "visible" : "hidden"));
+			i++;
+		});
+	}
+});
+
 // ----- icon.meter -----------------------------------------------------------
 $(document).delegate('svg[data-widget="icon.meter"]', {
 	'update': function (event, response) {
@@ -1325,6 +1381,37 @@ $(document).delegate('svg[data-widget="icon.shutter"]', {
 
 		var val = Math.round(response[0] / $(this).attr('data-max') * 38);
 		fx.grid(this, val, [14, 30], [86, 68]);
+	}
+});
+
+// ----- icon.ventilation -----------------------------------------------------
+$(document).delegate('svg[data-widget="icon.ventilation"]', {
+	'update': function (event, response) {
+		// response is: {{ gad_value }}, {{ gad_switch }}
+
+		var val = (1 - response[0] / $(this).attr('data-max')) * 4.5 + 0.5;
+		$('#' + this.id + ' #anim').attr('dur', (response[0] > 0 ? val : 0));
+	}
+});
+
+// ----- icon.volume ---------------------------------------------------------
+$(document).delegate('svg[data-widget="icon.volume"]', {
+	'update': function (event, response) {
+		// response is: {{ gad_value }}, {{ gad_switch }}
+
+		var val = Math.round(response[0] / $(this).attr('data-max') * 71);
+		// fx.bar(this, val, [left, bottom], [right, top]);
+		fx.bar(this, val, [18, 68], [89, 50]);
+	}
+});
+
+// ----- icon.windmill --------------------------------------------------------
+$(document).delegate('svg[data-widget="icon.windmill"]', {
+	'update': function (event, response) {
+		// response is: {{ gad_value }}, {{ gad_switch }}
+
+		var val = (1 - response[0] / $(this).attr('data-max')) * 4.5 + 0.5;
+		$('#' + this.id + ' #anim').attr('dur', (response[0] > 0 ? val : 0));
 	}
 });
 
@@ -1470,7 +1557,7 @@ $(document).delegate('div[data-widget="plot.minmaxavg"]', {
 				oneResponse[j][0] = new Date(oneResponse[j][0]).setHours(0,0,0,0);
 			}
 		}
-		
+
 		var ranges = [];
 		for (var i = 0; i < response[0].length; i++) {
                       ranges[i] = [response[0][i][0], response[0][i][1], response[1][i][1]];
@@ -1546,32 +1633,15 @@ $(document).delegate('div[data-widget="plot.minmaxavg"]', {
 	}
 });
 
-// ----- icon.light ---------------------------------------------------------
-$(document).delegate('svg[data-widget="icon.light"]', {
-	'update': function (event, response) {
-		// response is: {{ gad_value }}, {{ gad_switch }}
-        var val = Math.round(response[0] / $(this).attr('data-max') * 10);
-        // Iterate over all child elements
-        var i=1;
-        $('#' + this.id + ' g#light-rays line').each(function(){
-            if (val >= i) {
-                $(this).css("visibility", "visible");
-            }
-            else {
-                $(this).css("visibility", "hidden");
-            }
-            i++;
-        });
-	}
-});
-
-// ----- icon.volume ---------------------------------------------------------
-$(document).delegate('svg[data-widget="icon.volume"]', {
+// ----- icon.zenith ----------------------------------------------------------
+$(document).delegate('svg[data-widget="icon.zenith"]', {
 	'update': function (event, response) {
 		// response is: {{ gad_value }}, {{ gad_switch }}
 
-		var val = Math.round(response[0] / $(this).attr('data-max') * 71);
-        // fx.bar(this, val, [left, bottom], [right, top]);
-		fx.bar(this, val, [18, 68], [89, 50]);
+		var ang = response[0] / $(this).attr('data-max') * Math.PI;
+		pt = fx.rotate([10, 90], ang, [50, 90]);
+
+		$('#' + this.id + ' #sun').attr('x', pt[0] - 50);
+		$('#' + this.id + ' #sun').attr('y', pt[1] - 50);
 	}
 });
